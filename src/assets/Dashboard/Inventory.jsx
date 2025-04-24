@@ -1,15 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MdOutlineInventory } from 'react-icons/md';
 import { FaArrowUp, FaArrowDown } from 'react-icons/fa';
 
 export default function Inventory() {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
+  const [products, setProducts] = useState([]);
 
-  const filteredProducts = [...Array(6)].filter((_, idx) =>
-    `Product #${idx + 1}`.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    (categoryFilter === 'All' || categoryFilter === 'Electronics')
+  const API_BASE = import.meta.env.VITE_API_BASE;
+
+  useEffect(() => {
+    fetch(`${API_BASE}/products`)
+      .then((res) => res.json())
+      .then((data) => setProducts(data))
+      .catch((err) => console.error('Failed to fetch products:', err));
+  }, []);
+
+  const filteredProducts = products.filter(product =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    (categoryFilter === 'All' || product.category === categoryFilter)
   );
+
+  const totalProducts = products.length;
+  const outOfStock = products.filter(p => parseInt(p.stock) === 0).length;
+  const lowStock = products.filter(p => parseInt(p.stock) > 0 && parseInt(p.stock) < 10).length;
+  const newArrivals = products.filter(p => p.createdAt || false).length; // adjust this based on real logic
 
   return (
     <div className="p-6 bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 min-h-screen space-y-10">
@@ -22,13 +37,13 @@ export default function Inventory() {
         </div>
       </div>
 
-      {/* Inventory Summary Cards */}
+      {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: 'Total Products', value: 256, icon: <FaArrowUp className="text-green-500" />, color: 'from-green-200 to-green-100' },
-          { label: 'Out of Stock', value: 12, icon: <FaArrowDown className="text-red-500" />, color: 'from-red-200 to-red-100' },
-          { label: 'Low Stock', value: 34, icon: <FaArrowDown className="text-yellow-500" />, color: 'from-yellow-200 to-yellow-100' },
-          { label: 'New Arrivals', value: 8, icon: <FaArrowUp className="text-blue-500" />, color: 'from-blue-200 to-blue-100' },
+          { label: 'Total Products', value: totalProducts, icon: <FaArrowUp className="text-green-500" />, color: 'from-green-200 to-green-100' },
+          { label: 'Out of Stock', value: outOfStock, icon: <FaArrowDown className="text-red-500" />, color: 'from-red-200 to-red-100' },
+          { label: 'Low Stock', value: lowStock, icon: <FaArrowDown className="text-yellow-500" />, color: 'from-yellow-200 to-yellow-100' },
+          { label: 'New Arrivals', value: newArrivals, icon: <FaArrowUp className="text-blue-500" />, color: 'from-blue-200 to-blue-100' },
         ].map((item, index) => (
           <div key={index} className={`bg-gradient-to-br ${item.color} p-5 rounded-xl shadow-lg hover:shadow-2xl transition duration-300 space-y-3`}>
             <div className="flex justify-between items-center">
@@ -55,7 +70,7 @@ export default function Inventory() {
           className="w-full md:w-1/3 px-4 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-300"
         >
           <option value="All">All</option>
-          <option value="Electronics">Electronics</option>
+          <option value="Electronic">Electronic</option>
           <option value="Furniture">Furniture</option>
           <option value="Mobile">Mobile</option>
         </select>
@@ -77,19 +92,29 @@ export default function Inventory() {
             </tr>
           </thead>
           <tbody>
-            {filteredProducts.map((_, idx) => (
-              <tr key={idx} className="border-b hover:bg-purple-50">
-                <td className="py-3 px-4 font-medium text-gray-800">Product #{idx + 1}</td>
-                <td className="py-3 px-4 text-gray-700">Electronics</td>
-                <td className="py-3 px-4">{Math.floor(Math.random() * 100)}</td>
-                <td className="py-3 px-4">
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${idx % 3 === 0 ? 'bg-red-100 text-red-600' : idx % 3 === 1 ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
-                    {idx % 3 === 0 ? 'Out of Stock' : idx % 3 === 1 ? 'Low Stock' : 'In Stock'}
-                  </span>
-                </td>
-                <td className="py-3 px-4 text-gray-500">Apr 23, 2025</td>
-              </tr>
-            ))}
+            {filteredProducts.map((product, idx) => {
+              const stock = parseInt(product.stock);
+              const status =
+                stock === 0
+                  ? { label: 'Out of Stock', color: 'bg-red-100 text-red-600' }
+                  : stock < 10
+                  ? { label: 'Low Stock', color: 'bg-yellow-100 text-yellow-700' }
+                  : { label: 'In Stock', color: 'bg-green-100 text-green-700' };
+
+              return (
+                <tr key={product._id} className="border-b hover:bg-purple-50">
+                  <td className="py-3 px-4 font-medium text-gray-800">{product.name}</td>
+                  <td className="py-3 px-4 text-gray-700">{product.category}</td>
+                  <td className="py-3 px-4">{stock}</td>
+                  <td className="py-3 px-4">
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${status.color}`}>
+                      {status.label}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4 text-gray-500">Apr 23, 2025</td> {/* You can make this dynamic if needed */}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
