@@ -12,7 +12,7 @@ export default function Products() {
   const productSectionRef = useRef(null);
 
   // Base URL for API
-  const API_BASE = import.meta.env.VITE_API_BASE;
+  const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
   // Fetch products based on activeTag and category
   useEffect(() => {
