@@ -12,12 +12,12 @@ export default function Products() {
   const productSectionRef = useRef(null);
 
   // Base URL for API
-  const API_BASE = import.meta.env.VITE_API_BASE_URL;
+  const API_BASE = import.meta.env.VITE_API_BASE;
+  let url = `${API_BASE}/products`; // Default URL for 'All'
 
   // Fetch products based on activeTag and category
   useEffect(() => {
     const fetchProducts = async () => {
-      let url = `${API_BASE}/products`; // Default URL for 'All'
       
       // Add category filter if selected
       if (category && category !== 'All') {
@@ -69,6 +69,25 @@ export default function Products() {
       .catch((err) => console.error('Add Error:', err));
   };
 
+
+  // Products delete section
+  const handleDeleteProduct = (id) => {
+    
+    fetch(`${API_BASE}/products/${id}`, {
+      method: 'DELETE',
+    })
+      .then((res) => res.json())
+      .then(() => {
+        console.log('Product deleted successfully');
+        // After deletion, re-fetch the updated product list
+        const updatedProducts = products.filter((product) => product._id !== id);
+        setProducts(updatedProducts);
+      })
+      .catch((err) => console.error('Error deleting product:', err));
+     
+    
+  };
+  
   return (
     <div className="p-6 bg-gray-50 min-h-screen space-y-10">
       {/* Header */}
@@ -145,7 +164,10 @@ export default function Products() {
                   <td className="py-3 px-4">{product.price}</td>
                   <td className="py-3 px-4 space-x-2">
                     <button className="text-yellow-500 hover:text-yellow-600"><FaEdit /></button>
-                    <button className="text-red-500 hover:text-red-600"><FaTrashAlt /></button>
+                   <button onClick={() => handleDeleteProduct(product._id)} className="text-red-500 hover:text-red-600">
+  <FaTrashAlt />
+</button>
+
                   </td>
                 </tr>
               ))
