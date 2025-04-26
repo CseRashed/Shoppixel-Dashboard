@@ -7,7 +7,7 @@ export default function Inventory() {
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [products, setProducts] = useState([]);
 
-  const API_BASE = import.meta.env.VITE_API_BASE_URL;
+  const API_BASE = import.meta.env.VITE_API_BASE;
 
   useEffect(() => {
     fetch(`${API_BASE}/products`)
